@@ -2,7 +2,7 @@ import { GravityStarsBackground } from "@/components/animate-ui/components/backg
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "CodeLeap Newtoworking| Login",
 };
 
 

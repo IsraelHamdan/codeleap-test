@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode; }) {
     }
 
     if (username && isPublicRoute) {
-      router.replace("/");
+      router.replace("/dashboard");
       return;
     }
   }, [pathname, username, router, isPublicRoute]);
