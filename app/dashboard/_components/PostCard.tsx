@@ -6,6 +6,17 @@ import {
   dashboardFormStyle,
   dashboardIconStyle,
 } from "@/app/tailwindGlobal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +61,12 @@ const styles = {
     "flex-1 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300",
   actions: "flex items-center gap-2",
   actionIcon: dashboardIconStyle.button,
+  dialogContent:
+    "max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-200/90 ring-0 dark:border-slate-800/80 dark:bg-slate-950/95 dark:shadow-black/35",
+  dialogHeader: "items-start gap-2 text-left",
+  dialogTitle: "text-base font-semibold text-slate-950 dark:text-slate-50",
+  dialogDescription: "text-sm leading-6 text-slate-600 dark:text-slate-300",
+  dialogFooter: "mt-2 flex-col-reverse gap-2 sm:flex-row sm:justify-end",
   form: "flex flex-1 flex-col gap-4 pt-5",
   fieldWrapper: dashboardFormStyle.fieldWrapper,
   label: dashboardFormStyle.label,
@@ -62,6 +79,7 @@ const styles = {
 
 export default function PostCard({ post }: PostCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { updatePost, deletePost, isUpdating, isDeleting } = usePosts(post.id);
 
   const form = useForm({
@@ -117,6 +135,18 @@ export default function PostCard({ post }: PostCardProps) {
     setIsEditing(false);
   };
 
+  const handleDeletePost = () => {
+    deletePost(post.id, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        toast.success("Post excluído com sucesso.");
+      },
+      onError: () => {
+        toast.error("Não foi possível excluir o post.");
+      },
+    });
+  };
+
   return (
     <article className={styles.card}>
       <div className={styles.header}>
@@ -149,28 +179,64 @@ export default function PostCard({ post }: PostCardProps) {
               <PencilSimpleLineIcon className={styles.actionIcon} />
               Edit
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                dashboardButtonStyle.destructive,
-                dashboardButtonStyle.compact,
-              )}
-              onClick={() =>
-                deletePost(post.id, {
-                  onSuccess: () => {
-                    toast.success("Post excluído com sucesso.");
-                  },
-                  onError: () => {
-                    toast.error("Não foi possível excluir o post.");
-                  },
-                })
-              }
-              disabled={isBusy}
+            <AlertDialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
             >
-              <TrashIcon className={styles.actionIcon} />
-              {isDeleting ? "Excluindo..." : "Delete"}
-            </Button>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    dashboardButtonStyle.destructive,
+                    dashboardButtonStyle.compact,
+                  )}
+                  disabled={isBusy}
+                >
+                  <TrashIcon className={styles.actionIcon} />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className={styles.dialogContent}>
+                <AlertDialogHeader className={styles.dialogHeader}>
+                  <AlertDialogTitle className={styles.dialogTitle}>
+                    Excluir post?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className={styles.dialogDescription}>
+                    Essa ação não pode ser desfeita. Tem certeza que deseja
+                    excluir este post?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className={styles.dialogFooter}>
+                  <AlertDialogCancel
+                    className={cn(
+                      dashboardButtonStyle.secondary,
+                      dashboardButtonStyle.regular,
+                      "w-full sm:w-auto",
+                    )}
+                    disabled={isDeleting}
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="outline"
+                    className={cn(
+                      dashboardButtonStyle.destructive,
+                      dashboardButtonStyle.regular,
+                      "w-full sm:w-auto",
+                    )}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleDeletePost();
+                    }}
+                    disabled={isDeleting}
+                  >
+                    <TrashIcon className={styles.actionIcon} />
+                    {isDeleting ? "Excluindo..." : "Excluir post"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ) : null}
       </div>
