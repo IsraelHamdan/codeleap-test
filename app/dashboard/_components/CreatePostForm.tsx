@@ -1,14 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  dashboardButtonStyle,
+  dashboardFormStyle,
+} from "@/app/tailwindGlobal";
 import { useAuth } from "@/components/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import usePosts from "@/hooks/usePosts";
-import type { CreatePostDTO } from "@/lib/validations/posts.schema";
-import { useForm } from "@tanstack/react-form";
+import {
+  createPostSchema,
+  type CreatePostDTO,
+} from "@/lib/validations/posts.schema";
+import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type CreatePostFormValues = Pick<CreatePostDTO, "title" | "content">;
 
@@ -23,14 +31,14 @@ const defaultValues: CreatePostFormValues = {
 };
 
 const styles = {
-  form: "space-y-4",
-  fieldWrapper: "space-y-2",
-  label: "text-xs font-medium text-foreground",
-  input: "w-full",
-  textarea:
-    "min-h-32 w-full rounded-none border border-input bg-transparent px-2.5 py-2 text-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
-  actions: "flex justify-end pt-2",
-  button: "min-w-28",
+  form: dashboardFormStyle.form,
+  fieldWrapper: dashboardFormStyle.fieldWrapper,
+  label: dashboardFormStyle.label,
+  input: dashboardFormStyle.input,
+  textarea: dashboardFormStyle.textarea,
+  inputError: dashboardFormStyle.inputError,
+  error: dashboardFormStyle.error,
+  actions: dashboardFormStyle.actions,
 } as const;
 
 export default function CreatePostForm({
@@ -42,6 +50,10 @@ export default function CreatePostForm({
 
   const form = useForm({
     defaultValues,
+    validationLogic: revalidateLogic({
+      mode: "blur",
+      modeAfterSubmission: "blur",
+    }),
     onSubmit: ({ value }) => {
       if (!username) {
         toast.error("Usuário não encontrado.");
@@ -81,42 +93,75 @@ export default function CreatePostForm({
       }}
       className={styles.form}
     >
-      <form.Field name="title">
-        {(field) => (
-          <div className={styles.fieldWrapper}>
-            <Label htmlFor={field.name} className={styles.label}>
-              Título
-            </Label>
-            <Input
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              placeholder="Digite o título do post"
-              className={styles.input}
-            />
-          </div>
-        )}
+      <form.Field
+        name="title"
+        validators={{
+          onDynamic: createPostSchema.shape.title,
+        }}
+      >
+        {(field) => {
+          const errorMessage =
+            field.state.meta.isTouched && !field.state.meta.isValid
+              ? field.state.meta.errorMap.onDynamic?.[0]?.message
+              : undefined;
+
+          return (
+            <div className={styles.fieldWrapper}>
+              <Label htmlFor={field.name} className={styles.label}>
+                Título
+              </Label>
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                placeholder="Digite o título do post"
+                className={cn(
+                  styles.input,
+                  errorMessage ? styles.inputError : undefined,
+                )}
+              />
+              <p className={styles.error}>{errorMessage}</p>
+            </div>
+          );
+        }}
       </form.Field>
 
-      <form.Field name="content">
-        {(field) => (
-          <div className={styles.fieldWrapper}>
-            <Label htmlFor={field.name} className={styles.label}>
-              Conteúdo
-            </Label>
-            <textarea
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              placeholder="Escreva o conteúdo do post"
-              className={styles.textarea}
-            />
-          </div>
-        )}
+      <form.Field
+        name="content"
+        validators={{
+          onDynamic: createPostSchema.shape.content,
+        }}
+      >
+        {(field) => {
+          const errorMessage =
+            field.state.meta.isTouched && !field.state.meta.isValid
+              ? field.state.meta.errorMap.onDynamic?.[0]?.message
+              : undefined;
+
+          return (
+            <div className={styles.fieldWrapper}>
+              <Label htmlFor={field.name} className={styles.label}>
+                Conteúdo
+              </Label>
+              <textarea
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                placeholder="Escreva o conteúdo do post"
+                className={cn(
+                  styles.input,
+                  styles.textarea,
+                  errorMessage ? styles.inputError : undefined,
+                )}
+              />
+              <p className={styles.error}>{errorMessage}</p>
+            </div>
+          );
+        }}
       </form.Field>
 
       <div className={styles.actions}>
@@ -129,7 +174,11 @@ export default function CreatePostForm({
             <Button
               type="submit"
               disabled={!canSubmit || isCreating}
-              className={styles.button}
+              className={cn(
+                dashboardButtonStyle.primary,
+                dashboardButtonStyle.tall,
+                dashboardButtonStyle.form,
+              )}
             >
               {isCreating ? "Salvando..." : "Criar post"}
             </Button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { dashboardButtonStyle } from "@/app/tailwindGlobal";
 import { type TransitionEvent } from "react";
 import { Button } from "./ui/button";
 import {
@@ -9,6 +10,27 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+import { cn } from "@/lib/utils";
+
+const styles = {
+  root: "fixed inset-0 z-50",
+  backdrop:
+    "absolute inset-0 bg-black/40 transition-opacity duration-200",
+  backdropOpen: "opacity-100",
+  backdropClosed: "pointer-events-none opacity-0",
+  positioner:
+    "pointer-events-none flex h-full items-center justify-center p-4",
+  card:
+    "pointer-events-auto flex max-h-[78vh] w-[min(92vw,820px)] flex-col overflow-hidden rounded-2xl border border-border/70 shadow-2xl transition-all duration-200",
+  cardOpen: "translate-y-0 scale-100 opacity-100",
+  cardClosed: "translate-y-3 scale-95 opacity-0",
+  content: "overflow-y-auto",
+  footer: "justify-end border-t",
+  cancelButton: cn(
+    dashboardButtonStyle.destructive,
+    dashboardButtonStyle.regular,
+  ),
+} as const;
 
 interface ModalCardProps {
   isOppened: boolean;
@@ -32,31 +54,36 @@ export function ModalCard({
   if (!isModalMounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop — fecha ao clicar fora */}
+    <div className={styles.root}>
       <div
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${isOppened ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+        className={cn(
+          styles.backdrop,
+          isOppened ? styles.backdropOpen : styles.backdropClosed,
+        )}
         onMouseDown={onClose}
       />
 
-      {/* Wrapper de posicionamento */}
-      <div className="pointer-events-none flex h-full items-center justify-center p-4">
+      <div className={styles.positioner}>
         <Card
           ref={cardRef}
           onTransitionEnd={onTransitionEnd}
-          onMouseDown={(e) => e.stopPropagation()} // impede que cliques no card bublem pro backdrop
-          className={`pointer-events-auto flex max-h-[78vh] w-[min(92vw,820px)] flex-col overflow-hidden border-border/70 shadow-2xl transition-all duration-200 ${isOppened
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-3 scale-95 opacity-0"
-            }`}
+          onMouseDown={(e) => e.stopPropagation()}
+          className={cn(
+            styles.card,
+            isOppened ? styles.cardOpen : styles.cardClosed,
+          )}
         >
           <CardHeader>
             <CardTitle>{title}</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-y-auto">{children}</CardContent>
-          <CardFooter className="justify-end border-t">
-            <Button type="button" variant="destructive" onClick={onClose}>
+          <CardContent className={styles.content}>{children}</CardContent>
+          <CardFooter className={styles.footer}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onClose}
+              className={styles.cancelButton}
+            >
               Cancelar
             </Button>
           </CardFooter>

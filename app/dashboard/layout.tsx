@@ -1,3 +1,4 @@
+import { dashboardLayoutStyle } from "@/app/tailwindGlobal";
 import { postsKey } from "@/hooks/usePosts";
 import { api } from "@/lib/api";
 import { getDashboardData } from "@/lib/dashboard.service";
@@ -9,7 +10,6 @@ import Btn from "./_components/btn";
 export const metadata: Metadata = {
   title: "CodeLeap Newtoworking| Dashboard",
 };
-
 
 export default async function DashboardLayout({
   children,
@@ -28,8 +28,12 @@ export default async function DashboardLayout({
   const dehydratedState = dehydrate(queryClient);
   return (
     <HydrationBoundary state={dehydratedState}>
-      <Btn />
-      {children}
+      <div className={dashboardLayoutStyle.stack}>
+        <div className={dashboardLayoutStyle.actionBar}>
+          <Btn />
+        </div>
+        {children}
+      </div>
     </HydrationBoundary>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
+import { dashboardButtonStyle } from "@/app/tailwindGlobal";
 import { ModalCard } from "@/components/modalCards";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/useModal";
+import { cn } from "@/lib/utils";
 import CreatePostForm from "./CreatePostForm";
 
 const styles = {
-  trigger: "min-w-32",
+  triggerWrapper: "inline-flex",
 } as const;
 
 export default function Btn() {
@@ -23,8 +25,16 @@ export default function Btn() {
 
   return (
     <>
-      <span ref={triggerRef}>
-        <Button type="button" onClick={openModal} className={styles.trigger}>
+      <span ref={triggerRef} className={styles.triggerWrapper}>
+        <Button
+          type="button"
+          onClick={openModal}
+          className={cn(
+            dashboardButtonStyle.primary,
+            dashboardButtonStyle.tall,
+            dashboardButtonStyle.wide,
+          )}
+        >
           Criar post
         </Button>
       </span>

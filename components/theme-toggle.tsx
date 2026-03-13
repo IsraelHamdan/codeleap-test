@@ -29,7 +29,7 @@ export default function ModeToggle() {
           pressed={isDark}
           onPressedChange={(pressed: boolean) => setTheme(pressed ? "dark" : "light")}
         >
-          {isDark ? <SunIcon size={6} /> : <MoonStarsIcon size={6} />}
+          {isDark ? <SunIcon size={32} /> : <MoonStarsIcon size={32} />}
         </Toggle>
       </TooltipTrigger>
       <TooltipContent

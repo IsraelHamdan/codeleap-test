@@ -1,12 +1,11 @@
 "use client";
-import { DehydratedState, HydrationBoundary, QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from "react";
+import { DehydratedState, HydrationBoundary, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from "react";
 import { ThemeProvider, useTheme } from "next-themes";
 import { getQueryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from './AuthContext';
 import { TooltipProvider } from './ui/tooltip';
-import ModeToggle from './theme-toggle';
 
 const THEME_COOKIE = "theme";
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -45,7 +44,6 @@ export function Providers({
         <QueryClientProvider client={queryClient}>
           <HydrationBoundary state={dehydratedState}>
             <TooltipProvider>
-              <ModeToggle />
               {children}
             </TooltipProvider>
           </HydrationBoundary>
