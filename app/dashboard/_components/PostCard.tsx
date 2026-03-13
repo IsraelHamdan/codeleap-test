@@ -9,8 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { postsKey } from "@/hooks/usePosts";
-import { api } from "@/lib/api";
+import usePosts from "@/hooks/usePosts";
 import { cn } from "@/lib/utils";
 import { PencilSimpleLineIcon, TrashIcon } from "@phosphor-icons/react";
 import {
@@ -19,14 +18,11 @@ import {
   updateSchema as updatePostSchema,
 } from "@/lib/validations/posts.schema";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 type PostCardProps = {
   post: Post;
 };
-
-type UpdatePostFormValues = Pick<UpdatePostDTO, "title" | "content">;
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -66,19 +62,28 @@ const styles = {
 
 export default function PostCard({ post }: PostCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const queryClient = useQueryClient();
+  const { updatePost, deletePost, isUpdating, isDeleting } = usePosts(post.id);
 
   const form = useForm({
     defaultValues: {
       title: post.title,
       content: post.content,
-    } satisfies UpdatePostFormValues,
+    } satisfies UpdatePostDTO,
     validationLogic: revalidateLogic({
       mode: "blur",
       modeAfterSubmission: "blur",
     }),
     onSubmit: ({ value }) => {
-      updateMutation.mutate(value);
+      updatePost(value, {
+        onSuccess: () => {
+          reset(value);
+          setIsEditing(false);
+          toast.success("Post atualizado com sucesso.");
+        },
+        onError: () => {
+          toast.error("Não foi possível atualizar o post.");
+        },
+      });
     },
   });
 
@@ -92,40 +97,7 @@ export default function PostCard({ post }: PostCardProps) {
       });
     }
   }, [isEditing, post.content, post.title, reset]);
-
-  const updateMutation = useMutation<void, Error, UpdatePostFormValues>({
-    mutationFn: async (values) => {
-      await api.patch(`/${post.id}/`, values);
-    },
-    onSuccess: async (_, values) => {
-      reset(values);
-      setIsEditing(false);
-      toast.success("Post atualizado com sucesso.");
-      await queryClient.invalidateQueries({
-        queryKey: postsKey.all,
-      });
-    },
-    onError: () => {
-      toast.error("Não foi possível atualizar o post.");
-    },
-  });
-
-  const deleteMutation = useMutation<void, Error, void>({
-    mutationFn: async () => {
-      await api.delete(`/${post.id}/`);
-    },
-    onSuccess: async () => {
-      toast.success("Post excluído com sucesso.");
-      await queryClient.invalidateQueries({
-        queryKey: postsKey.all,
-      });
-    },
-    onError: () => {
-      toast.error("Não foi possível excluir o post.");
-    },
-  });
-
-  const isBusy = updateMutation.isPending || deleteMutation.isPending;
+  const isBusy = isUpdating || isDeleting;
   const titleId = `post-${post.id}-title`;
   const contentId = `post-${post.id}-content`;
 
@@ -184,11 +156,20 @@ export default function PostCard({ post }: PostCardProps) {
                 dashboardButtonStyle.destructive,
                 dashboardButtonStyle.compact,
               )}
-              onClick={() => deleteMutation.mutate()}
+              onClick={() =>
+                deletePost(post.id, {
+                  onSuccess: () => {
+                    toast.success("Post excluído com sucesso.");
+                  },
+                  onError: () => {
+                    toast.error("Não foi possível excluir o post.");
+                  },
+                })
+              }
               disabled={isBusy}
             >
               <TrashIcon className={styles.actionIcon} />
-              {deleteMutation.isPending ? "Excluindo..." : "Delete"}
+              {isDeleting ? "Excluindo..." : "Delete"}
             </Button>
           </div>
         ) : null}
@@ -306,7 +287,7 @@ export default function PostCard({ post }: PostCardProps) {
                   )}
                   disabled={!canSubmit || isBusy}
                 >
-                  {updateMutation.isPending ? "Salvando..." : "Salvar"}
+                  {isUpdating ? "Salvando..." : "Salvar"}
                 </Button>
               )}
             </form.Subscribe>
