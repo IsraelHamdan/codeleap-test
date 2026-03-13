@@ -1,5 +1,5 @@
 import { dashboardLayoutStyle } from "@/app/tailwindGlobal";
-import { postsKey } from "@/hooks/usePosts";
+import { postsKey, STALE_TIME } from "@/hooks/usePosts";
 import { api } from "@/lib/api";
 import { getDashboardData } from "@/lib/dashboard.service";
 import { getQueryClient } from "@/lib/queryClient";
@@ -17,7 +17,6 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const queryClient = getQueryClient();
-  const STALE_TIME = 1000 * 60 * 5;
 
   await queryClient.prefetchQuery({
     queryKey: postsKey.all,
