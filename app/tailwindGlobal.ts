@@ -29,6 +29,21 @@ export const formStyle = {
     "w-full rounded-md bg-[#1e2939] text-white text-lg font-bold py-4 hover:opacity-90 disabled:opacity-60",
 };
 
+export const authLayoutStyle = {
+  container:
+    "relative isolate flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-100 px-4 py-10 text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-6 lg:px-8",
+  background:
+    "absolute inset-0 size-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.85),_transparent_58%),linear-gradient(135deg,_rgba(226,232,240,0.95),_rgba(248,250,252,0.98))] text-slate-500 dark:bg-[radial-gradient(circle_at_top,_rgba(51,65,85,0.4),_transparent_60%),linear-gradient(135deg,_rgba(2,6,23,0.98),_rgba(15,23,42,0.92))] dark:text-slate-200",
+  overlay:
+    "absolute inset-0 bg-white/40 dark:bg-slate-950/20",
+  toggleWrapper:
+    "absolute right-4 top-4 z-30 rounded-full border border-slate-200/80 bg-white/80 p-1 shadow-lg shadow-slate-950/10 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-black/30 sm:right-6 sm:top-6",
+  contentWrapper:
+    "relative z-20 flex w-full items-center justify-center",
+  contentCard:
+    "w-full max-w-[30rem] rounded-[2rem] border border-white/70 bg-white/82 p-6 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.7)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/78 dark:shadow-[0_30px_90px_-55px_rgba(2,6,23,0.95)] sm:p-8",
+};
+
 const dashboardFieldBase =
   "w-full border border-slate-200 bg-white px-4 text-sm text-slate-900 shadow-sm transition-all duration-200 " +
   "placeholder:text-slate-400 focus-visible:outline-none focus-visible:border-slate-400 focus-visible:ring-4 " +
