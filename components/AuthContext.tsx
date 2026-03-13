@@ -2,11 +2,13 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
-  useState,
   useEffect,
+  useSyncExternalStore,
+  type ReactNode,
 } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LoginDTO } from "@/lib/validations/user.schema";
 
 type AuthContextType = {
@@ -15,42 +17,119 @@ type AuthContextType = {
   logout: () => void;
 };
 
-const PUBLIC_ROUTES = ["/auth"];
+const AUTH_ROUTE = "/auth";
+const DEFAULT_AUTHENTICATED_ROUTE = "/dashboard";
+const USERNAME_STORAGE_KEY = "username";
+const AUTH_STORAGE_EVENT = "auth:storage-change";
+const PUBLIC_ROUTES = new Set([AUTH_ROUTE]);
 
 const AuthContext = createContext<AuthContextType | null>(null);
-export function AuthProvider({ children }: { children: React.ReactNode; }) {
+
+function subscribeToAuth(onStoreChange: () => void) {
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === USERNAME_STORAGE_KEY) {
+      onStoreChange();
+    }
+  };
+
+  const handleAuthChange = () => {
+    onStoreChange();
+  };
+
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener(AUTH_STORAGE_EVENT, handleAuthChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener(AUTH_STORAGE_EVENT, handleAuthChange);
+  };
+}
+
+function getUsernameSnapshot() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(USERNAME_STORAGE_KEY);
+}
+
+function getServerUsernameSnapshot() {
+  return null;
+}
+
+function notifyAuthChange() {
+  window.dispatchEvent(new Event(AUTH_STORAGE_EVENT));
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const currentPath = pathname ?? "/";
+  const username = useSyncExternalStore(
+    subscribeToAuth,
+    getUsernameSnapshot,
+    getServerUsernameSnapshot
+  );
 
-  const [username, setUsername] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("username");
-  });
+  const isPublicRoute = PUBLIC_ROUTES.has(currentPath);
+  const isRootRoute = currentPath === "/";
+  const isProtectedRoute = !isPublicRoute && !isRootRoute;
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const redirectTo = useCallback(
+    (targetPath: string) => {
+      if (currentPath !== targetPath) {
+        router.replace(targetPath);
+      }
+    },
+    [currentPath, router]
+  );
+
+  const checkAuthStatus = useCallback(
+    (opts?: {
+      redirectOnAuthChange?: boolean;
+      usernameSnapshot?: string | null;
+    }) => {
+      const {
+        redirectOnAuthChange = true,
+        usernameSnapshot = username,
+      } = opts ?? {};
+      const isAuthenticated = usernameSnapshot !== null;
+
+      if (redirectOnAuthChange && !isAuthenticated && isProtectedRoute) {
+        redirectTo(AUTH_ROUTE);
+      }
+
+      if (redirectOnAuthChange && isAuthenticated && isPublicRoute) {
+        redirectTo(DEFAULT_AUTHENTICATED_ROUTE);
+      }
+
+      return usernameSnapshot;
+    },
+    [isProtectedRoute, isPublicRoute, redirectTo, username]
+  );
 
   useEffect(() => {
-    if (!username && !isPublicRoute) {
-      router.replace("/auth");
-      return;
-    }
-
-    if (username && isPublicRoute) {
-      router.replace("/dashboard");
-      return;
-    }
-  }, [pathname, username, router, isPublicRoute]);
+    checkAuthStatus({ redirectOnAuthChange: true });
+  }, [checkAuthStatus]);
 
   function login(data: LoginDTO) {
-    localStorage.setItem("username", data.username);
-    setUsername(data.username);
-    router.replace("/");
+    localStorage.setItem(USERNAME_STORAGE_KEY, data.username);
+    notifyAuthChange();
+    redirectTo(DEFAULT_AUTHENTICATED_ROUTE);
   }
 
   function logout() {
-    localStorage.removeItem("username");
-    setUsername(null);
-    router.replace("/auth");
+    localStorage.removeItem(USERNAME_STORAGE_KEY);
+    notifyAuthChange();
+    redirectTo(AUTH_ROUTE);
+  }
+
+  if (!username && isProtectedRoute) {
+    return null;
+  }
+
+  if (username && isPublicRoute) {
+    return null;
   }
 
   return (

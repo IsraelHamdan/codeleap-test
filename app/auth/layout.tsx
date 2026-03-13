@@ -1,4 +1,5 @@
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars";
+import ModeToggle from "@/components/theme-toggle";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export default function AuthLayout({
 }>) {
   return (
     <section>
+      <ModeToggle />
       <GravityStarsBackground />
       {children}
     </section>
